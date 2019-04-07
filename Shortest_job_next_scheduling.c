@@ -7,12 +7,12 @@ struct process{
 	int burst_time;
 	int waiting_time;
 	int turn_around_time;
-	int priority;
+	float priority;
 	bool finished;
 		};
 struct process *ptr, *ready;
-int n,i,total_time,rp=0;
-
+int n,i,total_time,total=0,rp=0;
+bool all_finished=false;
 
 void calculate_priority();
 void set_to_zero();
@@ -21,6 +21,8 @@ void calculate_ready_queue();
 void show();
 void calculate_turn_around();
 void process_execute();
+void calculate_total();
+void check_all_finished();
 
 void main()
 {
@@ -39,21 +41,41 @@ void main()
 		scanf("%d",&(ptr+i)->burst_time);
 	}
 	calculate_priority();
-	for(i=0;i<n;i++)
+	calculate_total();
+	while(!all_finished)
 	{
 		calculate_ready_queue();
 		process_execute();
 		calculate_waiting_time();
 		calculate_priority();
+		check_all_finished();
+		show();
 		
 	}
 	calculate_turn_around();
-	show();
+	
 }
 
 
-
-
+void check_all_finished()
+{
+	for(i=0;i<n;i++)
+	{
+		if((ptr+i)->finished ==false)
+		{
+			all_finished=false;
+			return;
+		}
+	}
+	all_finished=true;
+}
+void calculate_total()
+{
+	for(i=0;i<n;i++)
+	{
+		total=total+(ptr+i)->burst_time;
+	}
+}
 void calculate_ready_queue()
 {
 	int j,i,k;
@@ -75,7 +97,7 @@ void calculate_priority()
 	{
 		if((ptr+j)->finished==false)
 		{
-			(ptr+j)->priority = (1+ceil((ptr+j)->waiting_time/(ptr+j)->burst_time));
+			(ptr+j)->priority = 1+(((float)(ptr+j)->waiting_time)/((float)(ptr+j)->burst_time));
 		}
 	}
 }
@@ -111,13 +133,21 @@ void show()
 	printf("\nProcess\tArrival Time\tBurst Time\tPriority\tWaiting Time\tTurn Around Time\t Finished");
 	for(i=0;i<n;i++)
 	{	
-		printf("\np%d\t\t%d\t\t%d\t\t%d\t\t%d\t\t%d\t\t%s",(ptr+i)->id,(ptr+i)->arrival_time,(ptr+i)->burst_time,(ptr+i)->priority,(ptr+i)->waiting_time,(ptr+i)->turn_around_time,(ptr+i)->finished?"true":"false");
+		printf("\np%d\t\t%d\t\t%d\t %0.2f\t\t\t%d\t\t%d\t\t   %s",(ptr+i)->id,(ptr+i)->arrival_time,(ptr+i)->burst_time,(ptr+i)->priority,(ptr+i)->waiting_time,(ptr+i)->turn_around_time,(ptr+i)->finished?"true":"false");
 	}
 	
 }
 void process_execute()
 {
-	int index,i,max=0;
+	int index,i;
+	float max=0.0;
+	if(rp==0)
+	{
+		printf("\nExecuting Nothing\n");
+		total_time=total_time+1;
+		printf("\nTotal_time=%d",total_time);
+		return;
+	}
 	for(i=0;i<rp;i++)
 	{
 		if((ready+i)->priority > max)
@@ -127,7 +157,7 @@ void process_execute()
 		}
 		
 	}
-	if(max!=0)
+	if(max!=0.0)
 	{
 		int p_id=(ready+index)->id;
 		printf("\np%d Executing\n",p_id);
