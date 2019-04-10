@@ -12,8 +12,10 @@ struct process{
 		};
 struct process *ptr, *ready;
 int n,i,total_time,total=0,rp=0;
+float s_wait=0.0,s_turn=0.0;
 bool all_finished=false;
 
+void input();
 void calculate_priority();
 void set_to_zero();
 void calculate_waiting_time();
@@ -21,14 +23,37 @@ void calculate_ready_queue();
 void show();
 void calculate_turn_around();
 void process_execute();
-void calculate_total();
 void check_all_finished();
 
 void main()
 {
 	
+	input();
+	calculate_priority();
+	while(!all_finished)
+	{
+		calculate_ready_queue();
+		process_execute();
+		calculate_waiting_time();
+		calculate_priority();
+		check_all_finished();
+	
+		
+	}
+	calculate_turn_around();
+	show();
+	
+}
+
+void input()
+{
 	printf("Enter the number of process:-\t");
 	scanf("%d",&n);
+	if(n<=0)
+	{
+		printf("\nInvalid number of process");
+		exit(0);
+	}
 	ptr=(struct process*)malloc(n*sizeof(struct process));
 	ready=(struct process*)malloc(n*sizeof(struct process));
 	set_to_zero();
@@ -37,26 +62,20 @@ void main()
 		printf("\np%d:- ",i+1);
 		printf("arrival time:-\t");
 		scanf("\n%d",&(ptr+i)->arrival_time);
+		if((ptr+i)->arrival_time<0)
+		{
+		printf("\nInvalid arrival of process");
+		exit(0);
+		}
 		printf("burst time:-\t");
 		scanf("%d",&(ptr+i)->burst_time);
+		if((ptr+i)->burst_time<=0)
+		{
+		printf("\nInvalid burst time of process");
+		exit(0);
+		}
 	}
-	calculate_priority();
-	calculate_total();
-	while(!all_finished)
-	{
-		calculate_ready_queue();
-		process_execute();
-		calculate_waiting_time();
-		calculate_priority();
-		check_all_finished();
-		show();
-		
-	}
-	calculate_turn_around();
-	
 }
-
-
 void check_all_finished()
 {
 	for(i=0;i<n;i++)
@@ -69,13 +88,7 @@ void check_all_finished()
 	}
 	all_finished=true;
 }
-void calculate_total()
-{
-	for(i=0;i<n;i++)
-	{
-		total=total+(ptr+i)->burst_time;
-	}
-}
+
 void calculate_ready_queue()
 {
 	int j,i,k;
@@ -97,6 +110,7 @@ void calculate_priority()
 	{
 		if((ptr+j)->finished==false)
 		{
+			
 			(ptr+j)->priority = 1+(((float)(ptr+j)->waiting_time)/((float)(ptr+j)->burst_time));
 		}
 	}
@@ -130,12 +144,15 @@ void set_to_zero()
 void show()
 {
 	int i;
-	printf("\nProcess\tArrival Time\tBurst Time\tPriority\tWaiting Time\tTurn Around Time\t Finished");
+	printf("\n\nProcess\tArrival Time\tBurst Time\tPriority\tWaiting Time\tTurn Around Time\t Finished");
 	for(i=0;i<n;i++)
 	{	
-		printf("\np%d\t\t%d\t\t%d\t %0.2f\t\t\t%d\t\t%d\t\t   %s",(ptr+i)->id,(ptr+i)->arrival_time,(ptr+i)->burst_time,(ptr+i)->priority,(ptr+i)->waiting_time,(ptr+i)->turn_around_time,(ptr+i)->finished?"true":"false");
+		printf("\n  p%d\t\t%d\t\t%d\t %0.2f\t\t\t%d\t\t%d\t\t   %s",(ptr+i)->id,(ptr+i)->arrival_time,(ptr+i)->burst_time,(ptr+i)->priority,(ptr+i)->waiting_time,(ptr+i)->turn_around_time,(ptr+i)->finished?"true":"false");
+		s_wait+=(ptr+i)->waiting_time;
+		s_turn+=(ptr+i)->turn_around_time;
 	}
-	
+	printf("\n\nAverage waiting time is = %f",(float)s_wait/n);
+	printf("\nAverage Turn around time = %f",(float)s_turn/n);
 }
 void process_execute()
 {
@@ -143,9 +160,7 @@ void process_execute()
 	float max=0.0;
 	if(rp==0)
 	{
-		printf("\nExecuting Nothing\n");
 		total_time=total_time+1;
-		printf("\nTotal_time=%d",total_time);
 		return;
 	}
 	for(i=0;i<rp;i++)
@@ -160,10 +175,11 @@ void process_execute()
 	if(max!=0.0)
 	{
 		int p_id=(ready+index)->id;
-		printf("\np%d Executing\n",p_id);
+		printf("\np%d Executing",p_id);
+		printf("\tFrom time=%d",total_time);
 		total_time=total_time+(ready+index)->burst_time;
 		((ptr+p_id)-1)->finished=true;
-		printf("\nTotal_time=%d",total_time);
+		printf("\tTo time=%d",total_time);
 	}	
 }
 void calculate_turn_around()
